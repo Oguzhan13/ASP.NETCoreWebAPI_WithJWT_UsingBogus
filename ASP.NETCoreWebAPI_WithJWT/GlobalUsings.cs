@@ -1,0 +1,16 @@
+﻿global using ASP.NETCoreWebAPI_WithJWT.Context;
+global using ASP.NETCoreWebAPI_WithJWT.Extensions;
+global using ASP.NETCoreWebAPI_WithJWT.Models;
+global using ASP.NETCoreWebAPI_WithJWT.Options;
+global using ASP.NETCoreWebAPI_WithJWT.Services.Abstracts;
+global using ASP.NETCoreWebAPI_WithJWT.Services.Concretes;
+global using Microsoft.AspNetCore.Authentication.JwtBearer;
+global using Microsoft.AspNetCore.Identity;
+global using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+global using Microsoft.AspNetCore.Mvc;
+global using Microsoft.EntityFrameworkCore;
+global using Microsoft.Extensions.Options;
+global using Microsoft.IdentityModel.Tokens;
+global using System.IdentityModel.Tokens.Jwt;
+global using System.Security.Claims;
+global using System.Text;

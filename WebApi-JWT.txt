@@ -1,0 +1,106 @@
+NuGet Packages:
+	- Microsoft.AspNetCore.Autentication.JwtBearer (Jwt Authentication)
+	- Microsoft.AspNetCore.Identity.EntityFramework ()
+	- Microsoft.AspNetCore.OpenApi (Api)
+	- Microsoft.EntityFrameworkCore.Sqlite (NoSql)
+	- Microsoft.EntityFrameworkCore.Tools (Migration)
+	- Swashbuckle.AspNetCore (Api)
+	- System.IdentityModel.Tokens.Jwt (Jwt Authentication)
+
+* https://jwt.io/ -> Jwt Control web site !
+* When testing via swagger or postman -> email must include "@" character & password must minimum 6 character and characters must include upper letter, lower letter, number, symbol !
+
+Create Models folder -> Create User.cs class in Models folder -> Inherit IdentityUser and add extra property in User.cs
+	- Create RegistryDto.cs and LoginDto.cs classes in Models folder or create Dtos folder in Models folder & apply same process in Dtos folder.
+	- Create AuthResult.cs class with nullable Token and IsSucces properties in Models
+
+Create Context folder -> Create JwtDbContext.cs class in Context folder -> Use User class for IdentityDbContext's type
+	- Create contructor method and add parameter (parameter's type is DbContextOptions<JwtDbContext>) -> add " : base(parameter) " for constructor and parameter name must equal to constructor's parameter name
+
+Create Extensions folder -> Create DependencyInjection.cs static class in Extensions Folder
+	- Create a AddApiServices() static method & Add this method in Program.cs (builder.Services...) 
+	- Method type must be IServiceCollection and parameters type must be IServiceCollection (this) and IConfiguration
+		- Use AddDbContext() method in AddApiServices() method for connecting to database or fake database (don't use UseSqlServer method for this project, use UseSqlite method)
+		- Do migration process (add-migration & update database)
+		- Use Configure() method in AddApiServices() method for used to add values between themselves
+		- Use AddAuthentication() method in AddApiServices() method for token's validation parameters
+			-> To use JwtBearerDefaults we have to install the "Microsoft.AspNetCore.Autentication.JwtBearer" NuGet Package
+			- Add AddJwtBearer() method in AddAuthentication() method for filling in some token validation parameters mapped Jwt & filling in other validation parameters
+		- Use AddIdentity() method in AddApiServices() method for Conditions are specified for User in IdentityOptions and IdentityRole in IdentityRole
+			- Add AddEntityFrameworkStores() method in AddIdentity() method for add JwtDbContext in entity framework stores
+			- Add AddDefaultTokenProviders() method in AddIdentity() method for To include the token provider configuration as a service to build the for example forgot password mechanism
+		- Use AddScoped<Interface, Class>() method for creates a dependency in the application. 
+			- It ensures that the object uses the same object until the request process is terminated, and a new object is created when a different call is made.
+			- for example: services.AddScoped<IJwtService, JwtService>();
+		- Use AddControllers method for
+		- AddController(), AddEndpointsApiExplorer() and Add.SwaggerGen() methods move to AddApiServices() method from Program.cs class
+
+Program.cs class:
+	- add builder for DependencyInjection process -> builder.Services.AddApiServices(builder.Configuration);
+	- AddController(), AddEndpointsApiExplorer() and Add.SwaggerGen() methods delete from Program.cs and move to AddApiServices() method from DependencyInjection.cs class in Extensions folder
+
+Controllers folder:
+	- Create UserController.cs class in Controller folder
+		- Add Http attributes for this class's Tasks	-> if you want to specify which process it belongs to: [HttpPost("process name")] 
+			- for example -> just like [HttpPost("registry")] or [HttpPost("login")]
+		- There are two way for Injection process:
+			1) Create constructor method -> parameter type UserManager<User> userName		-> userName is variable
+				- Create a field -> private readonly UserManager<User> _userName;			-> _userName is variable
+			2) Add [FormServices] attribute for UserManager<User> 				
+				-> public async Task<IActionResult> Registry( [FormServices] UserManager<User> userManager, RegisterDto registryDto)
+		- Create a constructor method with parameter is IJwtService type & apply injection process for IJwtService interface -> private readonly IJwtService _jwtService ->  
+		- Create async Task<IActionResult> for Register process & parameters types must be RegistryDto and [FromService]UserManager<User>	-> if we want asenkron method, we use "async Task"		
+			- Do ModelState control
+			- Assign user Instance for User class -> apply mapping process for this object properties & RegistryDto properties -> user is variable
+			- Assign createUserResult -> await userName.CreateAsync(user, registryDto.Password);	-> createUserResult is variable
+			- Control the result of the variable -> if createUserResult succeeded return Ok() else return BadRequest()
+			- Add new AuthResult in BadRequest() method & IsSuccess property equal false;
+			- Before return Ok():
+				- Add JWT infromations in appsettings.Development.json
+				- Assign token -> _JwtService.GetJwtToken(user);	-> Use GetJwtToken method in JwtService.cs class & use user variable as argument
+				- Add new AuthResult in Ok() method & IsSuccess property equal true, Token property equal token variable
+		- Create async Task<IActionResult> for Login process & parameters types must be LoginDto and [FromService] SignInManager<User>
+			- Do ModelState control
+			- Assign user = await signInManager.UserManager.FindByEmailAsync(loginDto.Email);
+			- Control the result of the variable -> if user equal null -> return BadRequest() method
+				- Add new AuthResult in BadRequest() method & IsSuccess property equal false;
+				- Else assign signInResult = await signInManager.CheckPasswordSignInAsync(user, loginDto.Password, false); -> signInResult is variable
+				- Control the result of the variable -> if signUnResult succeeded return Ok() else return BadRequest()
+				- Add new AuthResult in BadRequest() method & IsSuccess property equal false;
+				- Before return Ok():
+					- Assign token -> _JwtService.GetJwtToken(user);	-> Use GetJwtToken method in JwtService.cs class & use user variable as argument
+					- Add new AuthResult in Ok() method & IsSuccess property equal true, Token property equal token variable
+		- Create ValuesController.cs class in Controller folder
+			- Add Attibute in ValuesController class [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+			- Create IActionResult for Get process & add [HttpGet] attribute
+			- Test the get method on the Postman platform for your metot's link -> for example https://localhost:1111/api/values
+				- Select Authorization then select Bearer Token type
+				- Paste the token value into token text box in postman
+
+appsettings.Development.json:
+	- ConnectionStrings	-> "Default" : "Data Source=JWT" -> use no SQL database (JWT file will be database for this application)
+	- Add JWT informations just like : "JWT" : { "Issuer": "", "Audience": "", "ExpiredTime": "00:20:00", "Secret": "kjfþsdkd" }	-> token active for 20 minutes
+
+Create Services folder	-> Create IJwtServices.cs interface and JwtService.cs class in Services folder or 
+Create Services folder -> Create Abstracts and Concretes folder	-> Create IJwtServices.cs interface in Abstracts folder and create JwtServices.cs class in Concrete folder
+	- Create GetJwtToken() method in IJwtServices interface & parameter type must be User
+	- JwtServices.cs inherit IJwtServices and implement GetJwtToken() method
+	- Injection for JwtOption -> Crete a filed (private readonly JwtOption _jwtOption;) & create constructor (IOptions<JwtOption> options) -> _jwtOption = options.Value;
+	- Assign user -> instance Claim class for Claim array:	-> user is variable 
+		- add new Claims in Claim array (so we add to the variable):
+			1) Claim parameters: ClaimTypes.NameIdentifier, user.Id
+			2) Claim parameters: JwtRegisteredClaimNames.Sub, user.Id	
+				- The property of the class to match the JwtRegisteredClaimNames.Sub must have unique value for the class
+				- To use JwtRegisteredClaimNames we have to install the "System.IdentityModel.Tokens.Jwt" NuGet Package
+			3) Claim parameters: JwtRegisteredClaimNames.Email, user.Email
+			4) Claim parameters: JwtRegisteredClaimNames.GivenName, user.FirstName
+			5) Claim parameters: JwtRegisteredClaimNames.FamilyNmae, user.LastName
+			6) Claim parameters: JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()	-> Jti is token Id, every turn give Guid value for Jwt Id
+		- Assign encodedKey -> Encoding.UTF8.GetBytes()	-> encodedKey is variable, encoding Secret in Jwt
+		- Assign signingCredentials -> new SigningCredentials(new SymmetricSecurityKey(encodedKey), SecurityAlgorithms.HmacSha256) -> signingCredentials is variable
+			- Create symetric security key with using encodedKey & select HmacSha256 for security algorithms 
+		- Assign token -> new JwtSecurityToken(...); -> token is variable
+			- issuer, audience, expires must be mapped _jwtOption properties; claims equal assigned variable (claims); signingCredentials equal assigned variable(signingCredentials)
+		- return new JwtSecurityTokenHandler and add WriteToken() method -> parameter of method is token variable 
+
+Create Options folder	-> Create JwtOptions.cs class	-> Add properties	-> properties names & JWT informations in appsettings.Development.json must be equal
