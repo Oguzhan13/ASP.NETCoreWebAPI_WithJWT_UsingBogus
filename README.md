@@ -1,7 +1,7 @@
 # ASP.NETCoreWebAPI_WithJWT_UsingBogus
 Two Project: Using bogus for fake data, using JWT for Authentication
 
-## ASP.NET Core Web API with JWT Authentication Using Bogus
+## ASP.NET Core Web API Using Bogus
 This project is a sample ASP.NET Core Web API application with JWT (JSON Web Tokens) authentication implemented using Bogus for generating fake data. It provides a basic setup for user registration, login, and accessing secure endpoints.
 
 NuGet Packages
