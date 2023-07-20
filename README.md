@@ -1,7 +1,7 @@
 # ASP.NETCoreWebAPI_WithJWT_UsingBogus
 Two Project: Using bogus for fake data, using JWT for Authentication
 
-## ASP.NET Core Web API Using Bogus
+## ASP.NET Core Web API With JWT
 This project is a sample ASP.NET Core Web API application with JWT (JSON Web Tokens) authentication implemented using Bogus for generating fake data. It provides a basic setup for user registration, login, and accessing secure endpoints.
 
 NuGet Packages
@@ -89,3 +89,25 @@ When testing via Swagger or Postman, ensure that the email includes the "@" char
 The project uses SQLite as the database for development purposes. Ensure that the DefaultConnection in the appsettings.json file points to the correct database connection string.
 
 The expiration time for the JWT token is set to 20 minutes by default. You can adjust this value in the appsettings.json file.
+
+## Web API Using Bogus
+NuGet Packages:
+	- Microsoft.AspNetCore.OpenApi
+	- Swashbuckle.AspNetCore
+	- Bogus
+
+PROCESS STEPS:
+	- Create User.cs class and Models folder in project
+	- Create BogusFakeData.cs class and Fakes folder in project for using fake datas
+	- Add HomeController.cs API controller for Controllers folder. Do action methods (Get, Select, Create, Update and Delete)
+	- Create GlobalUsings.cs class in project for using code blocks
+
+POSTMAN QUERY
+	if swagger run (so application is runing):
+	- https://localhost:12345/api/Home		-> for example -> paste this link to Postman -> [HttpGet]		-> Get
+	- https://localhost:12345/api/Home/1	-> for example -> argument 1 for id value -> [HttpGet("{id}")]	-> Select
+	- https://localhost:12345/api/Home?id=1 -> for example -> argument 1 for id value -> [HttpDelete]		-> Delete
+	else -> solution folder location copy -> open cmd console and write: cd  -> paste location and enter -> write >dotnet run and enter -> copy localhost number
+	use new local host number for postman
+	- http://localhost:5000/api/Home/1 -> for example -> argument 1 for id value -> [HttpGet("{id}")]
+	- http://localhost:5000/api/Home?id=1 -> for example -> argument 1 for id value -> [HttpDelete]
